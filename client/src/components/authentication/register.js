@@ -1,70 +1,71 @@
 import React from 'react'
 import axios from 'axios'
+import { Formik, Form, Field } from 'formik';
+import * as Yup from 'yup'
 
-class Register extends React.Component{
-    constructor(props){
-        super(props)
-        this.state = {
-            username:'',
-            email:'',
-            password:''
-        }
+const SignupSchema = Yup.object().shape({
+    username: Yup.string()
+        .min(6, 'Too Short!')
+        .required('Field Required'),
+    email: Yup.string()
+        .email('Invalid email')
+        .required('Field Required'),
+    password: Yup.string()
+        .min(6, 'Too short!')
+        .max(12, 'Too long!')
+        .required('Field Required'),
+
+});
+
+
+class Register extends React.Component {
+    handleSubmit = (values) => {
+        axios.post('http://dct-user-auth.herokuapp.com/users/register', values)
+            .then((response) => {
+                if (response.data.errors) {
+                    alert(response.data.errors)
+                } else {
+                    this.props.history.push('/users/login')
+                }
+            })
     }
 
-    handleChange = (e) => {
-        e.persist()
-        this.setState(() => ({
-            [e.target.name]: e.target.value
-        }))
-    }
-
-
-    handleSubmit = (e) => {
-        e.preventDefault()
-        const formData = {
-            username:this.state.username,
-            email: this.state.email,
-            password: this.state.password
-
-        }
-        //console.log(formData)
-        
-        axios.post('http://dct-user-auth.herokuapp.com/users/register', formData)
-        .then(response => {
-            console.log(response.data)
-            if(response.data.errors){
-                alert(response.data.message)
-            }
-            else{
-                this.props.history.push('/users/login')
-            }
-        })
-    }
-
-    render(){
-        //console.log(this.props)
-        return(
+    render() {
+        return (
             <div>
-                <h2>Register</h2>
-                <form onSubmit = {this.handleSubmit}>
-                    <label>
-                        Username
-                        <input type="text" value={this.state.username} name="username" onChange={this.handleChange}/>
-                    </label><br/><br/>
-                    <label>
-                        Email
-                        <input type="text" value={this.state.email} name="email" onChange={this.handleChange}/>
-                    </label><br/><br/>
-                    <label>
-                        Password
-                        <input type="password" value={this.state.password} name="password" onChange={this.handleChange}/>
-                    </label><br/><br/>
-                    <input type="submit"/>
-                </form>
-            </div>
+                <h1>REGISTER</h1>
+                <Formik
+                    initialValues={{
+                        username: '',
+                        email: '',
+                        password: '',
+                    }}
+                    validationSchema={SignupSchema}
+                    onSubmit={this.handleSubmit}
+                >
+                    {({ errors, touched }) => (
+                        <Form>
+                            username:
+                                        <Field name="username" />
+                            {errors.username && touched.username ? (
+                                <div>{errors.username}</div>
+                            ) : null}
+                            email:
+                                        <Field name="email" type="email" />
+                            {errors.email && touched.email ? <div>{errors.email}</div> : null}
+                            password:
+                                        <Field name="password" type="password" />
+                            {errors.password && touched.password ? <div>{errors.password}</div> : null}
 
+                            <button type="submit">Submit</button>
+                        </Form>
+                    )}
+                </Formik>
+            </div>
         )
     }
+
 }
+
 
 export default Register
